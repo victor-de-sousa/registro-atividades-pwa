@@ -35,8 +35,7 @@ import TaskForm from '../components/TaskForm.vue';
 import TaskItem from '../components/TaskItem.vue';
 import { useTasks } from '../composables/useTasks';
 
-const { tasks, pendingTasks, completedTasks, addTask, toggleTask, removeTask } =
-  useTasks();
+const { tasks, pendingTasks, completedTasks, addTask, toggleTask, removeTask } = useTasks();
 </script>
 
 <style scoped>
