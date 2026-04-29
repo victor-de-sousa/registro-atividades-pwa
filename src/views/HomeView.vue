@@ -27,12 +27,15 @@
     <p v-if="tasks.length === 0" class="empty-message">
       Nenhuma tarefa cadastrada. Adicione uma acima.
     </p>
+
+    <InstallButton />
   </div>
 </template>
 
 <script setup>
 import TaskForm from '../components/TaskForm.vue';
 import TaskItem from '../components/TaskItem.vue';
+import InstallButton from '../components/InstallButton.vue';
 import { useTasks } from '../composables/useTasks';
 
 const { tasks, pendingTasks, completedTasks, addTask, toggleTask, removeTask } = useTasks();
