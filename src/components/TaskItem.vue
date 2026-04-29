@@ -8,9 +8,12 @@
       />
       <span class="task-title">{{ task.title }}</span>
     </label>
-    <button class="task-remove" @click="$emit('remove', task.id)">
-      Remover
-    </button>
+    <div class="task-actions">
+      <button class="task-edit" @click="$emit('edit', task)">Editar</button>
+      <button class="task-remove" @click="$emit('remove', task.id)">
+        Remover
+      </button>
+    </div>
   </div>
 </template>
 
@@ -22,7 +25,7 @@ defineProps({
   },
 });
 
-defineEmits(['toggle', 'remove']);
+defineEmits(['toggle', 'remove', 'edit']);
 </script>
 
 <style scoped>
@@ -63,6 +66,25 @@ defineEmits(['toggle', 'remove']);
 .task-item.done .task-title {
   text-decoration: line-through;
   color: #999;
+}
+
+.task-actions {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.task-edit {
+  background: none;
+  border: none;
+  color: #4a90d9;
+  cursor: pointer;
+  font-size: 0.85rem;
+  padding: 4px 8px;
+}
+
+.task-edit:hover {
+  text-decoration: underline;
 }
 
 .task-remove {
