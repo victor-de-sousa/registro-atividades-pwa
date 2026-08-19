@@ -6,7 +6,7 @@ const tasksApi = {
   },
 
   create(title) {
-    return apiClient.post('/tasks', { title })
+    return apiClient.post('/tasks', title)
   },
 
   update(id, data) {

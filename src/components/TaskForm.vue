@@ -55,7 +55,7 @@
 <script setup>
 import { ref, watch } from 'vue'
 import tasksApi from '../api/tasksApi.js'
-import CameraCapture from './components/CameraCapture.vue'
+import CameraCapture from '../components/CameraCapture.vue'
 
 const props = defineProps({
   editingTask: {
@@ -108,8 +108,10 @@ function handleSubmit() {
     img_attachment_key: imgAttachmentKey.value,
   };
 
+  console.log(payload.img_attachment_key)
+
   if (props.editingTask) {
-    emit('update', props.editingTask.id, payload);
+    emit('update', props.editingTask.id, payload.title, payload.img_attachment_key);
   } else {
     emit('add', payload);
   }
