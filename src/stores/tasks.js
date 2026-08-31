@@ -61,19 +61,7 @@ export const useTasksStore = defineStore('tasks', () => {
     }
   }
 
-  async function updateTask(id, { title, imgAttachmentKey } = {}) {
-    if (title !== undefined && !title.trim()) return;
-    error.value = null;
-    
-    const payload = {}
-    if (title !== undefined) {
-      payload.title = title.trim();
-    }
-
-    if (imgAttachmentKey != null) {
-      payload.img_attachment_key = imgAttachmentKey;
-    }
-    
+  async function updateTask(id, payload) {
     try {
       const response = await tasksApi.update(id, payload);
       const index = tasks.value.findIndex((t) => t.id === id);

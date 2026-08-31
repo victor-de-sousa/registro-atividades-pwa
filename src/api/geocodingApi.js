@@ -45,7 +45,7 @@ const geocodingApi = {
 
         const location = {
             label: extractAddressLabel(result),
-            displayName: result.display.name ?? null,
+            displayName: result.display_name ?? null,
         }
 
         writeCache(key, location)

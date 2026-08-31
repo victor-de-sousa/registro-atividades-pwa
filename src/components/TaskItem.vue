@@ -9,6 +9,7 @@
     <label class="task-label">
       <input type="checkbox" :checked="task.done" @change="$emit('toggle', task.id)" />
       <span class="task-title">{{ task.title }}</span>
+      <div class="location"></div>
     </label>
     <div class="task-actions">
       <button class="task-edit" @click="$emit('edit', task)">Editar</button>
@@ -18,6 +19,10 @@
 </template>
 
 <script setup>
+
+// import { computed } from 'vue'
+// import TaskLocationMap from './TaskLocationMap.vue'
+
 defineProps({
   task: {
     type: Object,
@@ -25,7 +30,27 @@ defineProps({
   },
 })
 
-defineEmits(['toggle', 'remove', 'edit'])
+
+// const location = computed(() => ({ 
+//   "latitude": props.task.latitude,
+//   "longitude": props.task.longitude,
+//   "location_label": props.task.location_label,
+//   "geolocation_accuracy": props.task.geolocation_accuracy,
+//   "geolocation_timestamp": props.task.geolocation_timestamp,
+//   "location_label": props.task.location_label,
+// }))
+
+// defineEmits(['toggle', 'remove', 'edit'])
+
+// function handleLocation() {
+//   if (location.value.location_label == null && location.value.latitude == null && location.value.longitude == null) {
+//     return false
+//   }
+//   else {
+//     return true
+//   }
+// }
+
 </script>
 
 <style scoped>

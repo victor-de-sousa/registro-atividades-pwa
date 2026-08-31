@@ -20,11 +20,13 @@
       <label class="image-label" :class="{ disabled: uploading }">
         <span v-if="uploading" class="upload-status">Enviando...</span>
         <span v-else>
-          {{ previewUrl || editingTask?.img_url
-          ? 'Trocar imagem'
-          : isMobileDevice 
-            ? 'Fotografar'
-            : 'Adicionar imagem' }}
+          {{
+            previewUrl || editingTask?.img_url
+              ? 'Trocar imagem'
+              : isMobileDevice
+                ? 'Fotografar'
+                : 'Adicionar imagem'
+          }}
         </span>
         <input
           type="file"
@@ -37,17 +39,36 @@
       </label>
 
       <p class="image-help">
-        Em celular, o botão pode abrir a câmera.
-        Em notebook, abre o seletor de arquivos.
+        Em celular, o botão pode abrir a câmera. Em notebook, abre o seletor de arquivos.
       </p>
 
-      <button type="button" class="task-button-secondary" @click="showCamera = !showCameraCapture">
+      <button
+        type="button"
+        class="task-button-secondary"
+        @click="showCameraCapture = !showCameraCapture"
+      >
         {{ showCameraCapture ? 'Fechar câmera' : 'Abrir preview ao vivo' }}
       </button>
-      <CameraCapture
-        v-if="showCameraCapture"
-        @captured="handleCameraCapture"
-      />
+      <CameraCapture v-if="showCameraCapture" @captured="handleCameraCapture" />
+    </div>
+    <div class="location-container">
+      <div class="location-actions">
+        <button class="location-btn" type="button" @click="handleShowLocation">
+          {{ showTaskLocation ? 'Substituir localização' : 'Adicionar Localização' }}
+        </button>
+        <button
+          type="button"
+          class="remove-location-btn"
+          v-if="showTaskLocation"
+          @click="handleDeleteLocation"
+        >
+          Remover
+        </button>
+      </div>
+
+      <div v-if="showTaskLocation">
+        <TaskLocationMap :location="location" />
+      </div>
     </div>
   </form>
 </template>
@@ -56,6 +77,8 @@
 import { ref, watch } from 'vue'
 import tasksApi from '../api/tasksApi.js'
 import CameraCapture from '../components/CameraCapture.vue'
+import TaskLocationMap from './TaskLocationMap.vue'
+import { useGeolocation } from '../composables/useGeolocation.js'
 
 const props = defineProps({
   editingTask: {
@@ -72,15 +95,52 @@ const uploading = ref(false)
 
 const showCameraCapture = ref(false)
 
+const { location, handleGetLocation, clearLocation } = useGeolocation()
+const showTaskLocation = ref(false)
+
+function handleLocation(task) {
+  if (task?.latitude != null && task?.longitude != null) {
+    location.value = {
+      latitude: task.latitude,
+      longitude: task.longitude,
+      location_label: task.location_label,
+      geolocation_accuracy: task.geolocation_accuracy,
+      geolocation_timestamp: task.geolocation_timestamp,
+      location_label: task.location_label,
+    }
+    return (showTaskLocation.value = true)
+  }
+}
+
 watch(
   () => props.editingTask,
-  (task) => {
+  async (task) => {
     newTask.value = task ? task.title : ''
     if (previewUrl.value) URL.revokeObjectURL(previewUrl.value)
     previewUrl.value = null
     imgAttachmentKey.value = null
+    handleLocation(task)
   },
 )
+
+async function handleShowLocation() {
+  await handleGetLocation()
+  if (showTaskLocation.value == false || location.value == null) {
+    showTaskLocation.value = !showTaskLocation.value
+  }
+}
+
+function handleDeleteLocation() {
+  location.value = {
+    latitude: null,
+    longitude: null,
+    location_label: null,
+    geolocation_accuracy: null,
+    geolocation_timestamp: null,
+    location_label: null,
+  }
+  showTaskLocation.value = !showTaskLocation.value
+}
 
 async function handleImageChange(event) {
   const file = event.target.files[0]
@@ -101,25 +161,34 @@ async function handleImageChange(event) {
 }
 
 function handleSubmit() {
-  if (!newTask.value.trim()) return;
+  let payload = {}
 
-  const payload = {
-    title: newTask.value.trim(),
-    img_attachment_key: imgAttachmentKey.value,
-  };
+  if (!newTask.value.trim()) return
 
-  console.log(payload.img_attachment_key)
-
-  if (props.editingTask) {
-    emit('update', props.editingTask.id, payload.title, payload.img_attachment_key);
-  } else {
-    emit('add', payload);
+  if (location.value != null) {
+    payload = location.value
   }
 
-  newTask.value = '';
-  if (previewUrl.value) URL.revokeObjectURL(previewUrl.value);
-  previewUrl.value = null;
-  imgAttachmentKey.value = null;
+  if (newTask.value.trim() !== undefined) {
+    payload.title = newTask.value.trim()
+  }
+
+  if (imgAttachmentKey.value != null) {
+    payload.img_attachment_key = imgAttachmentKey.value
+  }
+
+  if (props.editingTask) {
+    emit('update', props.editingTask.id, payload)
+  } else {
+    emit('add', payload)
+  }
+
+  newTask.value = ''
+  if (previewUrl.value) URL.revokeObjectURL(previewUrl.value)
+  previewUrl.value = null
+  imgAttachmentKey.value = null
+  clearLocation()
+  showTaskLocation.value = false
 }
 
 function handleCancel() {
@@ -127,31 +196,31 @@ function handleCancel() {
   if (previewUrl.value) URL.revokeObjectURL(previewUrl.value)
   previewUrl.value = null
   imgAttachmentKey.value = null
+  showTaskLocation.value = false
+  clearLocation()
+
   emit('cancel')
 }
 
-const isMobileDevice = ref(
-  !window.matchMedia('(pointer: fine)').matches,
-)
+const isMobileDevice = ref(!window.matchMedia('(pointer: fine)').matches)
 
 function handleCameraCapture(file) {
-  previewUrl.value = URL.createObjectURL(file);
-  uploading.value = true;
+  previewUrl.value = URL.createObjectURL(file)
+  uploading.value = true
 
   tasksApi
     .uploadImage(file)
     .then((response) => {
-      imgAttachmentKey.value = response.data.attachment_key;
+      imgAttachmentKey.value = response.data.attachment_key
     })
     .catch((err) => {
-      console.error(err);
+      console.error(err)
       previewUrl.value = null
     })
     .finally(() => {
       uploading.value = false
     })
 }
-
 </script>
 
 <style scoped>
@@ -271,4 +340,33 @@ function handleCameraCapture(file) {
   flex-basis: 100%;
 }
 
+.location-container {
+  background-color: #f8f9fa;
+  margin-top: 14px;
+  border: 1px dashed #ccc;
+  border-radius: 6px;
+  padding: 8px 14px;
+}
+
+.location-actions {
+  font-size: 1rem;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+}
+
+.location-btn {
+  background-color: #fff;
+  border: 1.5px solid #4a90d9;
+  color: #4a90d9;
+  padding: 4px 8px;
+  font-size: 1rem;
+  border-radius: 6px;
+}
+
+.remove-location-btn {
+  color: #e74c3c;
+  background: none;
+  border: none;
+}
 </style>
