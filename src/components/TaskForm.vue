@@ -54,7 +54,7 @@
     <div class="location-container">
       <div class="location-actions">
         <button class="location-btn" type="button" @click="handleShowLocation">
-          {{ showTaskLocation ? 'Substituir localização' : 'Adicionar Localização' }}
+          {{ showTaskLocation ? 'Substituir localização' : 'Usar localização atual' }}
         </button>
         <button
           type="button"
@@ -62,11 +62,12 @@
           v-if="showTaskLocation"
           @click="handleDeleteLocation"
         >
-          Remover
+          Remover localização
         </button>
       </div>
 
       <div v-if="showTaskLocation">
+        <div class="location-timestamp">{{ locationTimestamp }}</div>
         <TaskLocationMap :location="location" />
       </div>
     </div>
@@ -74,7 +75,7 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import tasksApi from '../api/tasksApi.js'
 import CameraCapture from '../components/CameraCapture.vue'
 import TaskLocationMap from './TaskLocationMap.vue'
@@ -111,6 +112,17 @@ function handleLocation(task) {
     return (showTaskLocation.value = true)
   }
 }
+
+const locationTimestamp = computed(() => {
+  let timestamp = location.value?.geolocation_timestamp
+  if (!timestamp) return null
+  if (timestamp[-1] != 'Z' && typeof(timestamp) !== 'number') timestamp = new Date(`${timestamp}Z`)
+
+  return new Date(timestamp).toLocaleString('pt-BR', {
+    dateStyle: 'long',
+    timeStyle: 'medium',
+  })
+}); 
 
 watch(
   () => props.editingTask,
@@ -166,6 +178,10 @@ function handleSubmit() {
   if (!newTask.value.trim()) return
 
   if (location.value != null) {
+    const timestamp = location.value.geolocation_timestamp
+    console.log('Antes timestamp: ', timestamp);
+    if (typeof(timestamp) === 'number') location.value.geolocation_timestamp = new Date(timestamp).toISOString()
+    console.log('Depois timestamp: ', location.value.geolocation_timestamp);
     payload = location.value
   }
 
@@ -349,10 +365,11 @@ function handleCameraCapture(file) {
 }
 
 .location-actions {
-  font-size: 1rem;
+  font-size: 0.875rem;
   width: 100%;
   display: flex;
   justify-content: space-between;
+  align-items: center;
 }
 
 .location-btn {
@@ -360,13 +377,22 @@ function handleCameraCapture(file) {
   border: 1.5px solid #4a90d9;
   color: #4a90d9;
   padding: 4px 8px;
-  font-size: 1rem;
+  font-size: 0.875rem;
   border-radius: 6px;
+  cursor: pointer;
 }
 
 .remove-location-btn {
+  cursor: pointer;
   color: #e74c3c;
   background: none;
   border: none;
 }
+
+.location-timestamp {
+  margin: 1vw 0;
+  font-size: 0.875rem;
+  color: #999;
+}
+
 </style>
