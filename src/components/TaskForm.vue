@@ -179,9 +179,7 @@ function handleSubmit() {
 
   if (location.value != null) {
     const timestamp = location.value.geolocation_timestamp
-    console.log('Antes timestamp: ', timestamp);
     if (typeof(timestamp) === 'number') location.value.geolocation_timestamp = new Date(timestamp).toISOString()
-    console.log('Depois timestamp: ', location.value.geolocation_timestamp);
     payload = location.value
   }
 
